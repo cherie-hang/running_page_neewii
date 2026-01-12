@@ -317,41 +317,58 @@ const getActivitySport = (act: Activity): string => {
   return '';
 };
 
+function getTimeOfDay(dateStr: string): string {
+  const hour = new Date(dateStr).getHours();
+  if (IS_CHINESE) {
+    if (hour >= 0 && hour < 9) return '清晨';
+    if (hour >= 9 && hour < 12) return '上午';
+    if (hour >= 12 && hour < 15) return '午后';
+    if (hour >= 15 && hour < 18) return '下午';
+    if (hour >= 18 && hour < 21) return '傍晚';
+    return '夜晚';
+  } else {
+    // 英文版（如果你的项目支持多语言）
+    if (hour >= 0 && hour < 9) return 'Morning';
+    if (hour >= 9 && hour < 12) return 'Late Morning';
+    if (hour >= 12 && hour < 15) return 'Afternoon';
+    if (hour >= 15 && hour < 18) return 'Late Afternoon';
+    if (hour >= 18 && hour < 21) return 'Evening';
+    return 'Night';
+  }
+}
+
 const titleForRun = (run: Activity): string => {
+  // 1. 优先使用 Strava 原标题（推荐！）
+  if (run.name && run.name.trim() !== '') {
+    return run.name.trim();
+  }
+
+  // 2. 如果开启 RICH_TITLE，且有城市信息，用 “城市 类型”
   if (RICH_TITLE) {
-    // 1. try to use user defined name
-    if (run.name != '') {
-      return run.name;
-    }
-    // 2. try to use location+type if the location is available, eg. 'Shanghai Run'
     const { city } = locationForRun(run);
     const activity_sport = getActivitySport(run);
     if (city && city.length > 0 && activity_sport.length > 0) {
-      return `${city} ${activity_sport}`;
+      return `${city} ${activity_sport}`;  // 如 “上海 骑行”
     }
   }
-  // 3. use time+length if location or type is not available
+
+  // 3. 最终 fallback：时间段 + 类型（动态选择类型）
+  const timePrefix = getTimeOfDay(run.start_date_local);  // 需要加这个函数，见下面
+  const activity_sport = getActivitySport(run);
+
+  // 如果有类型，用类型；否则 fallback 到跑步
+  const typeTitle = activity_sport || RUN_TITLES.RUN_GENERIC_TITLE;
+
+  // 距离特殊处理（全马/半马）
   const runDistance = run.distance / 1000;
-  const runHour = +run.start_date_local.slice(11, 13);
-  if (runDistance > 20 && runDistance < 40) {
-    return RUN_TITLES.HALF_MARATHON_RUN_TITLE;
+  if (runDistance >= 42) {
+    return `${timePrefix}${RUN_TITLES.FULL_MARATHON_RUN_TITLE}`;
   }
-  if (runDistance >= 40) {
-    return RUN_TITLES.FULL_MARATHON_RUN_TITLE;
+  if (runDistance > 20 && runDistance < 42) {
+    return `${timePrefix}${RUN_TITLES.HALF_MARATHON_RUN_TITLE}`;
   }
-  if (runHour >= 0 && runHour <= 10) {
-    return RUN_TITLES.MORNING_RUN_TITLE;
-  }
-  if (runHour > 10 && runHour <= 14) {
-    return RUN_TITLES.MIDDAY_RUN_TITLE;
-  }
-  if (runHour > 14 && runHour <= 18) {
-    return RUN_TITLES.AFTERNOON_RUN_TITLE;
-  }
-  if (runHour > 18 && runHour <= 21) {
-    return RUN_TITLES.EVENING_RUN_TITLE;
-  }
-  return RUN_TITLES.NIGHT_RUN_TITLE;
+
+  return `${timePrefix}${typeTitle}`;  // 如 “午后骑行” “傍晚徒步”
 };
 
 export interface IViewState {
