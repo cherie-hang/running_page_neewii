@@ -17,7 +17,7 @@ const getBasePath = () => {
 const data: ISiteMetadataResult = {
   siteTitle: 'Weihang的Sports Map',
   siteUrl: 'https://weihang-running-page.vercel.app/',
-  logo: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQTtc69JxHNcmN1ETpMUX4dozAgAN6iPjWalQ&usqp=CAU',
+  logo: 'https://avatars.githubusercontent.com/u/123562171?v=4',
   description: 'Personal site and blog',
   navLinks: [
     {
